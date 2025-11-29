@@ -5,32 +5,38 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { safeNumber, safeToFixed } from "@/lib/utils"
-import type { StockData } from "@/types"
+import type { StockData, Assumptions } from "@/types"
 
 interface DividendDiscountAnalysisProps {
   stockData?: StockData
   wacc?: number
+  assumptions?: Assumptions
   onDividendDiscountCalculated: (value: number) => void
 }
 
 export default function DividendDiscountAnalysis({
   stockData,
   wacc = 0.1,
+  assumptions,
   onDividendDiscountCalculated,
 }: DividendDiscountAnalysisProps) {
   const initialDividendPerShare = safeNumber(stockData?.financials?.dividendsPerShare, 1.0)
 
   const [dividendGrowthRate, setDividendGrowthRate] = useState(
-    safeNumber(stockData?.assumptions?.dividendGrowthRate, 3),
+    safeNumber(assumptions?.dividendGrowthRate ?? stockData?.assumptions?.dividendGrowthRate, 3),
   )
-  const [costOfEquity, setCostOfEquity] = useState(wacc * 100) // Use WACC as default cost of equity
+  const [costOfEquity, setCostOfEquity] = useState(
+    assumptions?.costOfEquity ? assumptions.costOfEquity : wacc * 100,
+  ) // Use WACC as default cost of equity
 
   const [ddaPerShare, setDdaPerShare] = useState(0)
 
   useEffect(() => {
-    setDividendGrowthRate(safeNumber(stockData?.assumptions?.dividendGrowthRate, 3))
-    setCostOfEquity(wacc * 100)
-  }, [stockData, wacc])
+    setDividendGrowthRate(
+      safeNumber(assumptions?.dividendGrowthRate ?? stockData?.assumptions?.dividendGrowthRate, 3),
+    )
+    setCostOfEquity(assumptions?.costOfEquity ? assumptions.costOfEquity : wacc * 100)
+  }, [stockData, wacc, assumptions])
 
   const calculateDDA = useCallback(() => {
     const divGrowth = safeNumber(dividendGrowthRate) / 100

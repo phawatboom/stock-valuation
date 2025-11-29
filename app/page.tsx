@@ -530,12 +530,13 @@ export default function Home() {
               </TabsList>
 
               <TabsContent value="dcf">
-                <DCFAnalysis stockData={stockData} wacc={waccValue} onDCFCalculated={setDcfValue} />
+                <DCFAnalysis stockData={stockData} wacc={waccValue} assumptions={assumptions} onDCFCalculated={setDcfValue} />
               </TabsContent>
               <TabsContent value="residual-income">
                 <ResidualIncomeAnalysis
                   stockData={stockData}
                   wacc={waccValue}
+                  assumptions={assumptions}
                   onResidualIncomeCalculated={setResidualIncomeValue}
                 />
               </TabsContent>
@@ -546,6 +547,7 @@ export default function Home() {
                 <DividendDiscountAnalysis
                   stockData={stockData}
                   wacc={waccValue}
+                  assumptions={assumptions}
                   onDividendDiscountCalculated={setDividendDiscountValue}
                 />
               </TabsContent>
@@ -556,7 +558,7 @@ export default function Home() {
                 />
               </TabsContent>
               <TabsContent value="wacc-wizard">
-                <WACCWizard stockData={stockData} onWACCCalculated={handleWACCCalculated} />
+                <WACCWizard stockData={stockData} assumptions={assumptions} onWACCCalculated={handleWACCCalculated} />
               </TabsContent>
               <TabsContent value="technical-analysis">
                 <TechnicalAnalysis stockData={stockData} />

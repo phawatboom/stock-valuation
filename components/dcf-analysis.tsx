@@ -8,11 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 
 import { safeNumber, safeToFixed } from "@/lib/utils"
-import type { StockData } from "@/types"
+import type { StockData, Assumptions } from "@/types"
 
 interface DCFAnalysisProps {
   stockData?: StockData
   wacc?: number
+  assumptions?: Assumptions
   onDCFCalculated: (value: number) => void
 }
 
@@ -23,17 +24,21 @@ interface Projection {
   presentValue: number
 }
 
-export default function DCFAnalysis({ stockData, wacc = 0.1, onDCFCalculated }: DCFAnalysisProps) {
+export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFCalculated }: DCFAnalysisProps) {
   const initialRevenue = safeNumber(stockData?.financials?.revenue, 1000000000)
   const initialFCFMargin = safeNumber(stockData?.financials?.fcfMargin, 0.05) * 100 // as percentage
   const initialSharesOutstanding = safeNumber(stockData?.metrics?.sharesOutstanding, 100000000)
 
-  const [revenueGrowthRate, setRevenueGrowthRate] = useState(safeNumber(stockData?.assumptions?.revenueGrowthRate, 5))
-  const [fcfMargin, setFcfMargin] = useState(initialFCFMargin)
-  const [terminalGrowthRate, setTerminalGrowthRate] = useState(
-    safeNumber(stockData?.assumptions?.terminalGrowthRate, 2),
+  const [revenueGrowthRate, setRevenueGrowthRate] = useState(
+    safeNumber(assumptions?.revenueGrowthRate ?? stockData?.assumptions?.revenueGrowthRate, 5),
   )
-  const [discountRate, setDiscountRate] = useState(wacc * 100) // Use WACC as default discount rate
+  const [fcfMargin, setFcfMargin] = useState(initialFCFMargin + safeNumber(assumptions?.marginImprovement, 0))
+  const [terminalGrowthRate, setTerminalGrowthRate] = useState(
+    safeNumber(assumptions?.terminalGrowthRate ?? stockData?.assumptions?.terminalGrowthRate, 2),
+  )
+  const [discountRate, setDiscountRate] = useState(
+    assumptions?.discountRate ? assumptions.discountRate : wacc * 100,
+  ) // Use assumptions discount rate if available, else WACC
 
   const [projectedFCF, setProjectedFCF] = useState<Projection[]>([])
   const [dcfValue, setDcfValue] = useState(0)
@@ -41,11 +46,13 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, onDCFCalculated }: 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    setRevenueGrowthRate(safeNumber(stockData?.assumptions?.revenueGrowthRate, 5))
-    setFcfMargin(safeNumber(stockData?.financials?.fcfMargin, 0.05) * 100)
-    setTerminalGrowthRate(safeNumber(stockData?.assumptions?.terminalGrowthRate, 2))
-    setDiscountRate(wacc * 100)
-  }, [stockData, wacc])
+    setRevenueGrowthRate(safeNumber(assumptions?.revenueGrowthRate ?? stockData?.assumptions?.revenueGrowthRate, 5))
+    setFcfMargin(
+      safeNumber(stockData?.financials?.fcfMargin, 0.05) * 100 + safeNumber(assumptions?.marginImprovement, 0),
+    )
+    setTerminalGrowthRate(safeNumber(assumptions?.terminalGrowthRate ?? stockData?.assumptions?.terminalGrowthRate, 2))
+    setDiscountRate(assumptions?.discountRate ? assumptions.discountRate : wacc * 100)
+  }, [stockData, wacc, assumptions])
 
   const calculateDCF = useCallback(() => {
     setErrors({})

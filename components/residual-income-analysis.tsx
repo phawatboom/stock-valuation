@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 import { safeNumber, safeToFixed } from "@/lib/utils"
-import type { StockData } from "@/types"
+import type { StockData, Assumptions } from "@/types"
 
 interface ResidualIncomeAnalysisProps {
   stockData?: StockData
   wacc?: number
+  assumptions?: Assumptions
   onResidualIncomeCalculated: (value: number) => void
 }
 
@@ -26,6 +27,7 @@ interface Projection {
 export default function ResidualIncomeAnalysis({
   stockData,
   wacc = 0.1,
+  assumptions,
   onResidualIncomeCalculated,
 }: ResidualIncomeAnalysisProps) {
   const initialBookValue = safeNumber(stockData?.financials?.totalEquity, 10000000000)
@@ -33,24 +35,26 @@ export default function ResidualIncomeAnalysis({
   const initialSharesOutstanding = safeNumber(stockData?.metrics?.sharesOutstanding, 100000000)
 
   const [bookValueGrowthRate, setBookValueGrowthRate] = useState(
-    safeNumber(stockData?.assumptions?.revenueGrowthRate, 5), // Using revenue growth as proxy if book value growth not available
+    safeNumber(assumptions?.revenueGrowthRate ?? stockData?.assumptions?.revenueGrowthRate, 5), // Using revenue growth as proxy if book value growth not available
   )
   const [roe, setRoe] = useState(safeNumber(stockData?.financials?.returnOnEquity, 0.15) * 100) // as percentage
   const [terminalGrowthRate, setTerminalGrowthRate] = useState(
-    safeNumber(stockData?.assumptions?.terminalGrowthRate, 2),
+    safeNumber(assumptions?.terminalGrowthRate ?? stockData?.assumptions?.terminalGrowthRate, 2),
   )
-  const [costOfEquity, setCostOfEquity] = useState(wacc * 100) // Use WACC as default cost of equity
+  const [costOfEquity, setCostOfEquity] = useState(
+    assumptions?.costOfEquity ? assumptions.costOfEquity : wacc * 100,
+  ) // Use WACC as default cost of equity
 
   const [projectedRI, setProjectedRI] = useState<Projection[]>([])
   const [riValue, setRiValue] = useState(0)
   const [riPerShare, setRiPerShare] = useState(0)
 
   useEffect(() => {
-    setBookValueGrowthRate(safeNumber(stockData?.assumptions?.revenueGrowthRate, 5))
+    setBookValueGrowthRate(safeNumber(assumptions?.revenueGrowthRate ?? stockData?.assumptions?.revenueGrowthRate, 5))
     setRoe(safeNumber(stockData?.financials?.returnOnEquity, 0.15) * 100)
-    setTerminalGrowthRate(safeNumber(stockData?.assumptions?.terminalGrowthRate, 2))
-    setCostOfEquity(wacc * 100)
-  }, [stockData, wacc])
+    setTerminalGrowthRate(safeNumber(assumptions?.terminalGrowthRate ?? stockData?.assumptions?.terminalGrowthRate, 2))
+    setCostOfEquity(assumptions?.costOfEquity ? assumptions.costOfEquity : wacc * 100)
+  }, [stockData, wacc, assumptions])
 
   const calculateResidualIncome = useCallback(() => {
     const bvGrowth = safeNumber(bookValueGrowthRate) / 100

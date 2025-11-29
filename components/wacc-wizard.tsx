@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 import { Calculator } from "lucide-react" // Correct import for Calculator icon
 import { safeNumber, safeToFixed } from "@/lib/utils"
-import type { StockData } from "@/types"
+import type { StockData, Assumptions } from "@/types"
 
 interface WACCBreakdown {
   costOfEquity: number
@@ -22,16 +22,17 @@ interface WACCBreakdown {
 
 interface WACCWizardProps {
   stockData?: StockData
+  assumptions?: Assumptions
   onWACCCalculated: (wacc: number, breakdown: WACCBreakdown | null) => void
 }
 
-export default function WACCWizard({ stockData, onWACCCalculated }: WACCWizardProps) {
+export default function WACCWizard({ stockData, assumptions, onWACCCalculated }: WACCWizardProps) {
   // Initial values based on stockData or sensible defaults
   const initialMarketValueEquity = safeNumber(stockData?.metrics?.marketCap, 100000000000) // Default to 100B
   const initialMarketValueDebt = safeNumber(stockData?.financials?.totalDebt, 50000000000) // Default to 50B
-  const initialCostOfEquity = safeNumber(stockData?.assumptions?.costOfEquity, 10) // as percentage
-  const initialCostOfDebt = safeNumber(stockData?.assumptions?.costOfDebt, 5) // as percentage
-  const initialTaxRate = safeNumber(stockData?.assumptions?.taxRate, 21) // as percentage
+  const initialCostOfEquity = safeNumber(assumptions?.costOfEquity ?? stockData?.assumptions?.costOfEquity, 10) // as percentage
+  const initialCostOfDebt = safeNumber(assumptions?.costOfDebt ?? stockData?.assumptions?.costOfDebt, 5) // as percentage
+  const initialTaxRate = safeNumber(assumptions?.taxRate ?? stockData?.assumptions?.taxRate, 21) // as percentage
 
   const [marketValueEquity, setMarketValueEquity] = useState(initialMarketValueEquity)
   const [marketValueDebt, setMarketValueDebt] = useState(initialMarketValueDebt)
@@ -46,10 +47,10 @@ export default function WACCWizard({ stockData, onWACCCalculated }: WACCWizardPr
   useEffect(() => {
     setMarketValueEquity(safeNumber(stockData?.metrics?.marketCap, 100000000000))
     setMarketValueDebt(safeNumber(stockData?.financials?.totalDebt, 50000000000))
-    setCostOfEquity(safeNumber(stockData?.assumptions?.costOfEquity, 10))
-    setCostOfDebt(safeNumber(stockData?.assumptions?.costOfDebt, 5))
-    setTaxRate(safeNumber(stockData?.assumptions?.taxRate, 21))
-  }, [stockData])
+    setCostOfEquity(safeNumber(assumptions?.costOfEquity ?? stockData?.assumptions?.costOfEquity, 10))
+    setCostOfDebt(safeNumber(assumptions?.costOfDebt ?? stockData?.assumptions?.costOfDebt, 5))
+    setTaxRate(safeNumber(assumptions?.taxRate ?? stockData?.assumptions?.taxRate, 21))
+  }, [stockData, assumptions])
 
   const calculateWACC = useCallback(() => {
     const E = safeNumber(marketValueEquity)
