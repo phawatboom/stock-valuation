@@ -18,6 +18,7 @@ interface WACCBreakdown {
   weightEquity: number
   weightDebt: number
   totalValue: number
+  taxRate: number
 }
 
 interface WACCWizardProps {
@@ -82,6 +83,7 @@ export default function WACCWizard({ stockData, assumptions, onWACCCalculated }:
       weightEquity: weightEquity,
       weightDebt: weightDebt,
       totalValue: V,
+      taxRate: T * 100,
     }
     setWaccBreakdown(breakdown)
     onWACCCalculated(calculatedWACC * 100, breakdown)

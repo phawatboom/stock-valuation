@@ -199,10 +199,22 @@ export default function Home() {
   }, [])
 
   const handleWACCCalculated = useCallback(
-    (calculatedWacc: number) => {
+    (calculatedWacc: number, breakdown: { costOfEquity: number; costOfDebt: number; taxRate: number } | null) => {
       setWaccValue(calculatedWacc)
       updateValuationResult("wacc", calculatedWacc) // Update WACC in valuation results
-      setAssumptions((prev) => ({ ...prev, discountRate: calculatedWacc })) // Also update discount rate in assumptions
+      
+      // Update assumptions if breakdown is available
+      if (breakdown) {
+        setAssumptions((prev) => ({
+          ...prev,
+          discountRate: calculatedWacc,
+          costOfEquity: breakdown.costOfEquity,
+          costOfDebt: breakdown.costOfDebt,
+          taxRate: breakdown.taxRate,
+        }))
+      } else {
+        setAssumptions((prev) => ({ ...prev, discountRate: calculatedWacc }))
+      }
     },
     [updateValuationResult],
   )
