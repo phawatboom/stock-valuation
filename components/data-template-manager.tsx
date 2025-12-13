@@ -28,6 +28,7 @@ import {
   FolderOpen,
 } from "lucide-react"
 import type { StockData } from "@/types"
+import { normalizeStockData } from "@/services/marketData/adapter"
 
 interface DataUpdateEvent {
   source: string
@@ -190,7 +191,8 @@ export default function DataTemplateManager({
       try {
         const content = e.target?.result as string
         // Parse CSV/Excel content here - assuming JSON for now
-        const parsedData = JSON.parse(content) as StockData
+        const rawData = JSON.parse(content)
+        const parsedData = normalizeStockData(rawData)
         console.log("File uploaded:", file.name)
         onDataUpdate({ source: "file", data: parsedData })
       } catch (error) {

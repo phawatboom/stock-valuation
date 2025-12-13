@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { StockData } from "@/types"
+import { normalizeStockData } from "@/services/marketData/adapter"
 
 interface FileUploadProps {
   onFileUpload: (data: StockData) => void
@@ -60,7 +61,8 @@ export default function FileUpload({ onFileUpload }: FileUploadProps) {
       try {
         const content = e.target?.result as string
         // Assuming JSON content for simplicity
-        const parsedData = JSON.parse(content)
+        const rawData = JSON.parse(content)
+        const parsedData = normalizeStockData(rawData)
         setUploadProgress(100)
         setParsedData(parsedData)
         setUploadStatus("success")
@@ -94,12 +96,12 @@ export default function FileUpload({ onFileUpload }: FileUploadProps) {
           <Upload className="h-5 w-5" />
           Upload Financial Data
         </CardTitle>
-        <CardDescription>Upload JSON or CSV files for custom analysis.</CardDescription>
+        <CardDescription>Upload JSON files for custom analysis.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <Label htmlFor="data-file">Financial Data File</Label>
-          <Input id="data-file" type="file" onChange={handleFileChange} accept=".json,.csv" />
+          <Input id="data-file" type="file" onChange={handleFileChange} accept=".json" />
         </div>
         <Button onClick={handleUpload} disabled={!file} className="w-full">
           <Upload className="h-4 w-4 mr-2" />
@@ -116,7 +118,7 @@ export default function FileUpload({ onFileUpload }: FileUploadProps) {
               </p>
             </div>
             <div className="text-xs text-gray-500">
-              <p>Supported formats: JSON, CSV</p>
+              <p>Supported formats: JSON</p>
             </div>
           </div>
         )}
