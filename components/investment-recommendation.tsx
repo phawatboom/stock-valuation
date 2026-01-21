@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react"
-import { safeNumber, safeToFixed } from "@/lib/utils"
+import { safeNumber, safeToFixed, formatCurrency } from "@/lib/utils"
 import type { StockData } from "@/types"
 
 interface InvestmentRecommendationProps {
@@ -81,8 +81,8 @@ export default function InvestmentRecommendation({
             {recommendation}
           </div>
           <p className="text-white text-lg">
-            Based on an average fair value of ฿{safeToFixed(averageFairValue)} vs. current price ฿
-            {safeToFixed(currentPrice)}.
+            Based on an average fair value of {formatCurrency(averageFairValue, stockData.currency)} vs. current price{" "}
+            {formatCurrency(currentPrice, stockData.currency)}.
           </p>
           <p className="text-white text-sm mt-1">Margin of Safety: {safeToFixed(marginOfSafety, 1)}%</p>
         </div>
@@ -95,27 +95,29 @@ export default function InvestmentRecommendation({
             <CardContent className="space-y-2">
               <div className="flex justify-between">
                 <span>Current Price:</span>
-                <span className="font-semibold">฿{safeToFixed(currentPrice)}</span>
+                <span className="font-semibold">{formatCurrency(currentPrice, stockData.currency)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Average Fair Value:</span>
-                <span className="font-semibold">฿{safeToFixed(averageFairValue)}</span>
+                <span className="font-semibold">{formatCurrency(averageFairValue, stockData.currency)}</span>
               </div>
               <div className="flex justify-between">
                 <span>DCF Valuation:</span>
-                <span className="font-semibold">฿{safeToFixed(safeNumber(valuationResult.dcf))}</span>
+                <span className="font-semibold">{formatCurrency(safeNumber(valuationResult.dcf), stockData.currency)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Residual Income:</span>
-                <span className="font-semibold">฿{safeToFixed(safeNumber(valuationResult.residualIncome))}</span>
+                <span className="font-semibold">{formatCurrency(safeNumber(valuationResult.residualIncome), stockData.currency)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Comparables:</span>
-                <span className="font-semibold">฿{safeToFixed(safeNumber(valuationResult.comparables))}</span>
+                <span className="font-semibold">{formatCurrency(safeNumber(valuationResult.comparables), stockData.currency)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Precedent Transactions:</span>
-                <span className="font-semibold">฿{safeToFixed(safeNumber(valuationResult.precedentTransactions))}</span>
+                <span className="font-semibold">
+                  {formatCurrency(safeNumber(valuationResult.precedentTransactions), stockData.currency)}
+                </span>
               </div>
             </CardContent>
           </Card>

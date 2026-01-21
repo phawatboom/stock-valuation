@@ -5,7 +5,7 @@ import React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DollarSign, TrendingUp, TrendingDown, Scale } from "lucide-react"
-import { safeNumber, safeToFixed } from "@/lib/utils"
+import { safeNumber, safeToFixed, formatCurrency } from "@/lib/utils"
 import type { StockData } from "@/types"
 
 interface ValuationSummaryProps {
@@ -58,8 +58,7 @@ export default function ValuationSummary({ stockData, valuationResult }: Valuati
         <div>
           <p className="text-sm font-medium text-gray-700">{title}</p>
           <p className="text-xl font-bold">
-            {isCurrency ? "฿" : ""}
-            {safeToFixed(value)}
+            {isCurrency ? formatCurrency(value, stockData?.currency) : safeToFixed(value)}
           </p>
         </div>
       </div>

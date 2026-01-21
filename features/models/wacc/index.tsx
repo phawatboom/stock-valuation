@@ -28,10 +28,17 @@ interface WACCWizardProps {
 }
 
 export default function WACCWizard({ stockData, assumptions, onWACCCalculated }: WACCWizardProps) {
+  // Calculate CAPM-based Cost of Equity
+  const riskFreeRate = stockData?.assumptions?.riskFreeRate ?? 4
+  const beta = stockData?.metrics?.beta ?? 1
+  const marketRiskPremium = stockData?.assumptions?.marketRiskPremium ?? 6
+  const capmCostOfEquity = riskFreeRate + beta * marketRiskPremium
+
   // Initial values based on stockData or sensible defaults
   const initialMarketValueEquity = safeNumber(stockData?.metrics?.marketCap, 100000000000) // Default to 100B
   const initialMarketValueDebt = safeNumber(stockData?.financials?.totalDebt, 50000000000) // Default to 50B
-  const initialCostOfEquity = safeNumber(assumptions?.costOfEquity ?? stockData?.assumptions?.costOfEquity, 10) // as percentage
+  // Prefer explicit assumption if provided (and different from default), otherwise CAPM
+  const initialCostOfEquity = safeNumber(assumptions?.costOfEquity ?? capmCostOfEquity, 10) 
   const initialCostOfDebt = safeNumber(assumptions?.costOfDebt ?? stockData?.assumptions?.costOfDebt, 5) // as percentage
   const initialTaxRate = safeNumber(assumptions?.taxRate ?? stockData?.assumptions?.taxRate, 21) // as percentage
 
@@ -46,9 +53,14 @@ export default function WACCWizard({ stockData, assumptions, onWACCCalculated }:
 
   // Update state when stockData or its relevant properties change
   useEffect(() => {
+    const rf = stockData?.assumptions?.riskFreeRate ?? 4
+    const b = stockData?.metrics?.beta ?? 1
+    const mrp = stockData?.assumptions?.marketRiskPremium ?? 6
+    const capm = rf + b * mrp
+
     setMarketValueEquity(safeNumber(stockData?.metrics?.marketCap, 100000000000))
     setMarketValueDebt(safeNumber(stockData?.financials?.totalDebt, 50000000000))
-    setCostOfEquity(safeNumber(assumptions?.costOfEquity ?? stockData?.assumptions?.costOfEquity, 10))
+    setCostOfEquity(safeNumber(assumptions?.costOfEquity ?? capm, 10))
     setCostOfDebt(safeNumber(assumptions?.costOfDebt ?? stockData?.assumptions?.costOfDebt, 5))
     setTaxRate(safeNumber(assumptions?.taxRate ?? stockData?.assumptions?.taxRate, 21))
   }, [stockData, assumptions])
@@ -111,7 +123,7 @@ export default function WACCWizard({ stockData, assumptions, onWACCCalculated }:
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="marketValueEquity">Market Value of Equity (฿)</Label>
+            <Label htmlFor="marketValueEquity">Market Value of Equity ({stockData?.currency || "฿"})</Label>
             <Input
               id="marketValueEquity"
               type="number"
@@ -121,7 +133,7 @@ export default function WACCWizard({ stockData, assumptions, onWACCCalculated }:
             />
           </div>
           <div>
-            <Label htmlFor="marketValueDebt">Market Value of Debt (฿)</Label>
+            <Label htmlFor="marketValueDebt">Market Value of Debt ({stockData?.currency || "฿"})</Label>
             <Input
               id="marketValueDebt"
               type="number"

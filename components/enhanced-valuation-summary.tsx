@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Info, DollarSign, TrendingUp, TrendingDown, CheckCircle, XCircle, AlertTriangle } from "lucide-react"
-import { safeNumber, safeToFixed } from "@/lib/utils"
+import { safeNumber, safeToFixed, formatCurrency } from "@/lib/utils"
 import type { StockData } from "@/types"
 
 interface EnhancedValuationSummaryProps {
@@ -137,12 +137,12 @@ export default function EnhancedValuationSummary({ stockData, valuationResult }:
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-lg">
             <DollarSign className="h-8 w-8 text-blue-600 mb-2" />
-            <div className="text-xl font-bold text-blue-800">฿{safeToFixed(currentPrice)}</div>
+            <div className="text-xl font-bold text-blue-800">{formatCurrency(currentPrice, stockData.currency)}</div>
             <div className="text-sm text-blue-700">Current Market Price</div>
           </div>
           <div className="flex flex-col items-center justify-center p-4 bg-green-50 rounded-lg">
             <CheckCircle className="h-8 w-8 text-green-600 mb-2" />
-            <div className="text-xl font-bold text-green-800">฿{safeToFixed(safeNumber(average))}</div>
+            <div className="text-xl font-bold text-green-800">{formatCurrency(safeNumber(average), stockData.currency)}</div>
             <div className="text-sm text-green-700">Average Fair Value</div>
           </div>
           <div
@@ -177,7 +177,7 @@ export default function EnhancedValuationSummary({ stockData, valuationResult }:
           <TableBody>
             <TableRow>
               <TableCell className="font-medium">DCF Analysis</TableCell>
-              <TableCell>฿{safeToFixed(dcf)}</TableCell>
+              <TableCell>{formatCurrency(dcf, stockData.currency)}</TableCell>
               <TableCell className={dcfUpside >= 0 ? "text-green-600" : "text-red-600"}>
                 {dcfUpside >= 0 ? "+" : ""}
                 {safeToFixed(dcfUpside, 1)}%
@@ -192,7 +192,7 @@ export default function EnhancedValuationSummary({ stockData, valuationResult }:
             </TableRow>
             <TableRow>
               <TableCell className="font-medium">Residual Income</TableCell>
-              <TableCell>฿{safeToFixed(residualIncome)}</TableCell>
+              <TableCell>{formatCurrency(residualIncome, stockData.currency)}</TableCell>
               <TableCell className={residualIncomeUpside >= 0 ? "text-green-600" : "text-red-600"}>
                 {residualIncomeUpside >= 0 ? "+" : ""}
                 {safeToFixed(residualIncomeUpside, 1)}%
@@ -207,7 +207,7 @@ export default function EnhancedValuationSummary({ stockData, valuationResult }:
             </TableRow>
             <TableRow>
               <TableCell className="font-medium">Comparables Analysis</TableCell>
-              <TableCell>฿{safeToFixed(comparables)}</TableCell>
+              <TableCell>{formatCurrency(comparables, stockData.currency)}</TableCell>
               <TableCell className={comparablesUpside >= 0 ? "text-green-600" : "text-red-600"}>
                 {comparablesUpside >= 0 ? "+" : ""}
                 {safeToFixed(comparablesUpside, 1)}%
@@ -222,7 +222,7 @@ export default function EnhancedValuationSummary({ stockData, valuationResult }:
             </TableRow>
             <TableRow>
               <TableCell className="font-medium">Dividend Discount</TableCell>
-              <TableCell>฿{safeToFixed(dividendDiscount)}</TableCell>
+              <TableCell>{formatCurrency(dividendDiscount, stockData.currency)}</TableCell>
               <TableCell className={dividendDiscountUpside >= 0 ? "text-green-600" : "text-red-600"}>
                 {dividendDiscountUpside >= 0 ? "+" : ""}
                 {safeToFixed(dividendDiscountUpside, 1)}%
@@ -267,11 +267,11 @@ export default function EnhancedValuationSummary({ stockData, valuationResult }:
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="flex flex-col p-4 border rounded-lg">
             <span className="text-sm text-gray-500">50-Day Moving Average</span>
-            <span className="font-bold text-lg">฿{safeToFixed(movingAverage50)}</span>
+            <span className="font-bold text-lg">{formatCurrency(movingAverage50, stockData.currency)}</span>
           </div>
           <div className="flex flex-col p-4 border rounded-lg">
             <span className="text-sm text-gray-500">200-Day Moving Average</span>
-            <span className="font-bold text-lg">฿{safeToFixed(movingAverage200)}</span>
+            <span className="font-bold text-lg">{formatCurrency(movingAverage200, stockData.currency)}</span>
           </div>
           <div className="flex flex-col p-4 border rounded-lg">
             <span className="text-sm text-gray-500">RSI (Relative Strength Index)</span>

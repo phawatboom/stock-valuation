@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { safeNumber, safeToFixed } from "@/lib/utils"
+import { safeNumber, safeToFixed, formatCurrency } from "@/lib/utils"
+import type { StockData } from "@/types"
 
 interface ScenarioResult {
   name: string
@@ -18,10 +19,11 @@ interface ScenarioResult {
 
 interface ScenarioAnalysisProps {
   baseValuation: number
+  stockData?: StockData
   onScenarioCalculated: (scenarios: ScenarioResult[]) => void
 }
 
-export default function ScenarioAnalysis({ baseValuation, onScenarioCalculated }: ScenarioAnalysisProps) {
+export default function ScenarioAnalysis({ baseValuation, stockData, onScenarioCalculated }: ScenarioAnalysisProps) {
   const [growthRateChange, setGrowthRateChange] = useState(0) // % change
   const [discountRateChange, setDiscountRateChange] = useState(0) // % change
   const [marginChange, setMarginChange] = useState(0) // % change
@@ -145,7 +147,7 @@ export default function ScenarioAnalysis({ baseValuation, onScenarioCalculated }
                   <TableHead>Growth Rate</TableHead>
                   <TableHead>Discount Rate</TableHead>
                   <TableHead>Margin</TableHead>
-                  <TableHead>Valuation (฿)</TableHead>
+                  <TableHead>Valuation ({stockData?.currency || "฿"})</TableHead>
                   <TableHead>Impact</TableHead>
                 </TableRow>
               </TableHeader>
@@ -156,7 +158,7 @@ export default function ScenarioAnalysis({ baseValuation, onScenarioCalculated }
                     <TableCell>{scenario.growth}%</TableCell>
                     <TableCell>{scenario.discount}%</TableCell>
                     <TableCell>{scenario.margin}%</TableCell>
-                    <TableCell>฿{scenario.value}</TableCell>
+                    <TableCell>{formatCurrency(safeNumber(scenario.value), stockData?.currency)}</TableCell>
                     <TableCell>{scenario.impact}</TableCell>
                   </TableRow>
                 ))}
