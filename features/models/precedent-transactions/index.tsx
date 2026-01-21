@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { safeNumber, safeToFixed, validateNumberInput } from "@/lib/utils"
+import { safeNumber, safeToFixed, validateNumberInput, formatCurrency } from "@/lib/utils"
 import type { StockData } from "@/types"
 
 interface PrecedentTransactionsProps {
@@ -204,12 +204,12 @@ export default function PrecedentTransactions({
                   <TableRow key={index}>
                     <TableCell>{comp.metric}</TableCell>
                     <TableCell>{comp.multiple}</TableCell>
-                    <TableCell>฿{comp.impliedValue}</TableCell>
+                    <TableCell>{formatCurrency(safeNumber(comp.impliedValue), stockData?.currency)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold bg-gray-100">
                   <TableCell colSpan={2}>Average Implied Value</TableCell>
-                  <TableCell>฿{safeToFixed(averageImpliedValue, 2)}</TableCell>
+                  <TableCell>{formatCurrency(averageImpliedValue, stockData?.currency)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

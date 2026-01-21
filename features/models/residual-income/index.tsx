@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
-import { safeNumber, safeToFixed } from "@/lib/utils"
+import { safeNumber, safeToFixed, formatCurrency } from "@/lib/utils"
 import type { StockData, Assumptions } from "@/types"
 
 interface ResidualIncomeAnalysisProps {
@@ -159,11 +159,11 @@ export default function ResidualIncomeAnalysis({
             <CardContent className="space-y-2">
               <div className="flex justify-between">
                 <span>Total RI Value:</span>
-                <span className="font-bold">฿{safeToFixed(riValue / 1000000000, 2)} Billion</span>
+                <span className="font-bold">{formatCurrency(riValue / 1000000000, stockData?.currency, 2)} Billion</span>
               </div>
               <div className="flex justify-between">
                 <span>RI Value Per Share:</span>
-                <span className="font-bold text-xl">฿{safeToFixed(riPerShare, 2)}</span>
+                <span className="font-bold text-xl">{formatCurrency(riPerShare, stockData?.currency, 2)}</span>
               </div>
             </CardContent>
           </Card>
@@ -178,7 +178,7 @@ export default function ResidualIncomeAnalysis({
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="year" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => [`฿${safeToFixed(value, 2)}B`, "Residual Income"]} />
+                  <Tooltip formatter={(value: number) => [`${formatCurrency(value, stockData?.currency, 2)}B`, "Residual Income"]} />
                   <Legend />
                   <Line type="monotone" dataKey="residualIncome" stroke="#82ca9d" name="Residual Income (Billions)" />
                 </LineChart>
@@ -206,27 +206,27 @@ export default function ResidualIncomeAnalysis({
                 {projectedRI.map((data, index) => (
                   <TableRow key={index}>
                     <TableCell>{data.year}</TableCell>
-                    <TableCell>฿{safeToFixed(data.bookValue, 2)}</TableCell>
-                    <TableCell>฿{safeToFixed(data.netIncome, 2)}</TableCell>
-                    <TableCell>฿{safeToFixed(data.residualIncome, 2)}</TableCell>
-                    <TableCell>฿{safeToFixed(data.presentValueRI, 2)}</TableCell>
+                    <TableCell>{formatCurrency(data.bookValue, stockData?.currency, 2)}</TableCell>
+                    <TableCell>{formatCurrency(data.netIncome, stockData?.currency, 2)}</TableCell>
+                    <TableCell>{formatCurrency(data.residualIncome, stockData?.currency, 2)}</TableCell>
+                    <TableCell>{formatCurrency(data.presentValueRI, stockData?.currency, 2)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold">
                   <TableCell colSpan={4}>Terminal Value RI (PV)</TableCell>
                   <TableCell>
-                    ฿
-                    {safeToFixed(
+                    {formatCurrency(
                       riValue / 1000000000 -
                         initialBookValue / 1000000000 -
                         projectedRI.reduce((sum, p) => sum + p.presentValueRI, 0),
+                      stockData?.currency,
                       2,
                     )}
                   </TableCell>
                 </TableRow>
                 <TableRow className="font-bold bg-gray-100">
                   <TableCell colSpan={4}>Total RI Value (PV)</TableCell>
-                  <TableCell>฿{safeToFixed(riValue / 1000000000, 2)}</TableCell>
+                  <TableCell>{formatCurrency(riValue / 1000000000, stockData?.currency, 2)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

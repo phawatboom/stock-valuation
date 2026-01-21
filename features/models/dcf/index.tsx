@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts"
 
-import { safeNumber, safeToFixed } from "@/lib/utils"
+import { safeNumber, safeToFixed, formatCurrency } from "@/lib/utils"
 import type { StockData, Assumptions } from "@/types"
 
 interface DCFAnalysisProps {
@@ -44,6 +44,9 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFC
   const [dcfValue, setDcfValue] = useState(0)
   const [dcfPerShare, setDcfPerShare] = useState(0)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  
+  // Sensitivity Analysis State
+  const [sensitivityMatrix, setSensitivityMatrix] = useState<{ discount: number, growth: number, value: number }[][]>([])
 
   useEffect(() => {
     setRevenueGrowthRate(safeNumber(assumptions?.revenueGrowthRate ?? stockData?.assumptions?.revenueGrowthRate, 5))
@@ -54,37 +57,45 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFC
     setDiscountRate(assumptions?.discountRate ? assumptions.discountRate : wacc * 100)
   }, [stockData, wacc, assumptions])
 
+  const calculateDCFValue = useCallback((revGrowth: number, fcfM: number, termGrowth: number, discRate: number) => {
+      let currentRevenue = initialRevenue
+      let currentFCF = currentRevenue * fcfM
+      let totalPV = 0
+
+      for (let i = 1; i <= 5; i++) {
+        currentRevenue *= 1 + revGrowth
+        currentFCF = currentRevenue * fcfM
+        const pv = currentFCF / Math.pow(1 + discRate, i)
+        totalPV += pv
+      }
+
+      const lastFCF = currentFCF
+      // Guard against division by zero or negative denominator
+      if (discRate <= termGrowth) return 0;
+      
+      const terminalValue = (lastFCF * (1 + termGrowth)) / (discRate - termGrowth)
+      const terminalPV = terminalValue / Math.pow(1 + discRate, 5)
+      totalPV += terminalPV
+      
+      return totalPV
+  }, [initialRevenue])
+
   const calculateDCF = useCallback(() => {
     setErrors({})
 
     try {
-      // Validate inputs
-      if (!stockData?.financials) {
-        throw new Error("Financial data is required for DCF analysis")
-      }
-
-      if (initialRevenue <= 0 || initialSharesOutstanding <= 0) {
-        throw new Error("Valid revenue and shares outstanding are required")
-      }
+      if (!stockData?.financials) throw new Error("Financial data is required")
+      if (initialRevenue <= 0 || initialSharesOutstanding <= 0) throw new Error("Valid revenue/shares required")
 
       const revGrowth = safeNumber(revenueGrowthRate) / 100
       const fcfM = safeNumber(fcfMargin) / 100
       const termGrowth = safeNumber(terminalGrowthRate) / 100
       const discRate = safeNumber(discountRate) / 100
 
-      // Validate rates
-      if (discRate <= 0) {
-        throw new Error("Discount rate must be greater than 0")
-      }
+      if (discRate <= 0) throw new Error("Discount rate must be > 0")
+      if (discRate <= termGrowth) throw new Error("Discount rate must be > terminal growth")
 
-      if (discRate <= termGrowth) {
-        throw new Error("Discount rate must be greater than terminal growth rate")
-      }
-
-      if (fcfM <= 0) {
-        throw new Error("FCF margin must be greater than 0")
-      }
-
+      // Main Calculation (Projections)
       let currentRevenue = initialRevenue
       let currentFCF = currentRevenue * fcfM
       let totalPV = 0
@@ -97,13 +108,12 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFC
         totalPV += pv
         projections.push({
           year: `Year ${i}`,
-          revenue: currentRevenue / 1000000000, // in billions
-          fcf: currentFCF / 1000000000, // in billions
-          presentValue: pv / 1000000000, // in billions
+          revenue: currentRevenue / 1000000000,
+          fcf: currentFCF / 1000000000,
+          presentValue: pv / 1000000000,
         })
       }
 
-      // Terminal Value Calculation
       const lastFCF = currentFCF
       const terminalValue = (lastFCF * (1 + termGrowth)) / (discRate - termGrowth)
       const terminalPV = terminalValue / Math.pow(1 + discRate, 5)
@@ -116,22 +126,39 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFC
       setDcfValue(calculatedDcfValue)
       setDcfPerShare(calculatedDcfPerShare)
       onDCFCalculated(calculatedDcfPerShare)
+
+      // Calculate Sensitivity Matrix
+      // Rows: Terminal Growth (+/- 0.5%, 1.0%)
+      // Cols: Discount Rate (+/- 0.5%, 1.0%)
+      const growthSteps = [-1.0, -0.5, 0, 0.5, 1.0]
+      const discountSteps = [-1.0, -0.5, 0, 0.5, 1.0]
+      
+      const matrix = growthSteps.map(gStep => {
+        return discountSteps.map(dStep => {
+          const g = termGrowth + (gStep / 100)
+          const d = discRate + (dStep / 100)
+          const val = calculateDCFValue(revGrowth, fcfM, g, d)
+          return {
+            growth: g * 100,
+            discount: d * 100,
+            value: val / initialSharesOutstanding
+          }
+        })
+      })
+      setSensitivityMatrix(matrix)
+
     } catch (error) {
       console.error("Error in DCF calculation:", error)
       setErrors({ calculation: error instanceof Error ? error.message : "DCF calculation failed" })
       setDcfValue(0)
       setDcfPerShare(0)
       setProjectedFCF([])
+      setSensitivityMatrix([])
     }
   }, [
-    stockData,
-    initialRevenue,
-    initialSharesOutstanding,
-    revenueGrowthRate,
-    fcfMargin,
-    terminalGrowthRate,
-    discountRate,
-    onDCFCalculated,
+    stockData, initialRevenue, initialSharesOutstanding,
+    revenueGrowthRate, fcfMargin, terminalGrowthRate, discountRate,
+    onDCFCalculated, calculateDCFValue
   ])
 
   useEffect(() => {
@@ -160,8 +187,6 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFC
               value={revenueGrowthRate}
               onChange={(e) => setRevenueGrowthRate(safeNumber(e.target.value))}
               step="0.1"
-              min="-50"
-              max="100"
             />
           </div>
           <div>
@@ -204,11 +229,11 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFC
             <CardContent className="space-y-2">
               <div className="flex justify-between">
                 <span>Total DCF Value:</span>
-                <span className="font-bold">฿{safeToFixed(dcfValue / 1000000000, 2)} Billion</span>
+                <span className="font-bold">{formatCurrency(dcfValue / 1000000000, stockData?.currency, 2)} Billion</span>
               </div>
               <div className="flex justify-between">
                 <span>DCF Value Per Share:</span>
-                <span className="font-bold text-xl">฿{safeToFixed(dcfPerShare, 2)}</span>
+                <span className="font-bold text-xl">{formatCurrency(dcfPerShare, stockData?.currency, 2)}</span>
               </div>
             </CardContent>
           </Card>
@@ -223,7 +248,7 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFC
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="year" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => [`฿${safeToFixed(value, 2)}B`, "FCF"]} />
+                  <Tooltip formatter={(value: number) => [`${formatCurrency(value, stockData?.currency, 2)}B`, "FCF"]} />
                   <Legend />
                   <Line type="monotone" dataKey="fcf" stroke="#8884d8" name="FCF (Billions)" />
                 </LineChart>
@@ -231,6 +256,48 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFC
             </CardContent>
           </Card>
         </div>
+
+        {/* Sensitivity Matrix */}
+        {sensitivityMatrix.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Sensitivity Analysis (Value Per Share)</CardTitle>
+              <CardDescription>Valuation sensitivity to Discount Rate (X-axis) and Terminal Growth (Y-axis)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-center font-bold">Growth \ WACC</TableHead>
+                      {sensitivityMatrix[0].map((cell, idx) => (
+                        <TableHead key={idx} className="text-center">{safeToFixed(cell.discount, 1)}%</TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sensitivityMatrix.map((row, rIdx) => (
+                      <TableRow key={rIdx}>
+                        <TableCell className="font-bold text-center border-r">{safeToFixed(row[0].growth, 1)}%</TableCell>
+                        {row.map((cell, cIdx) => (
+                          <TableCell 
+                            key={cIdx} 
+                            className={`text-center ${
+                              cell.value > dcfPerShare * 1.1 ? "bg-green-100 text-green-800" :
+                              cell.value < dcfPerShare * 0.9 ? "bg-red-50 text-red-800" : ""
+                            }`}
+                          >
+                            {formatCurrency(cell.value, stockData?.currency, 2)}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -250,20 +317,20 @@ export default function DCFAnalysis({ stockData, wacc = 0.1, assumptions, onDCFC
                 {projectedFCF.map((data, index) => (
                   <TableRow key={index}>
                     <TableCell>{data.year}</TableCell>
-                    <TableCell>฿{safeToFixed(data.revenue, 2)}</TableCell>
-                    <TableCell>฿{safeToFixed(data.fcf, 2)}</TableCell>
-                    <TableCell>฿{safeToFixed(data.presentValue, 2)}</TableCell>
+                    <TableCell>{formatCurrency(data.revenue, stockData?.currency, 2)}</TableCell>
+                    <TableCell>{formatCurrency(data.fcf, stockData?.currency, 2)}</TableCell>
+                    <TableCell>{formatCurrency(data.presentValue, stockData?.currency, 2)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold">
                   <TableCell colSpan={3}>Terminal Value (PV)</TableCell>
                   <TableCell>
-                    ฿{safeToFixed(dcfValue / 1000000000 - projectedFCF.reduce((sum, p) => sum + p.presentValue, 0), 2)}
+                    {formatCurrency(dcfValue / 1000000000 - projectedFCF.reduce((sum, p) => sum + p.presentValue, 0), stockData?.currency, 2)}
                   </TableCell>
                 </TableRow>
                 <TableRow className="font-bold bg-gray-100">
                   <TableCell colSpan={3}>Total DCF Value (PV)</TableCell>
-                  <TableCell>฿{safeToFixed(dcfValue / 1000000000, 2)}</TableCell>
+                  <TableCell>{formatCurrency(dcfValue / 1000000000, stockData?.currency, 2)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

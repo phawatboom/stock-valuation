@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-import { safeNumber, safeToFixed } from "@/lib/utils"
+import { safeNumber, safeToFixed, formatCurrency } from "@/lib/utils"
 import type { StockData } from "@/types"
 
 interface ComparablesAnalysisProps {
@@ -188,12 +188,12 @@ export default function ComparablesAnalysis({ stockData, onComparablesCalculated
                     <TableCell>{comp.metric}</TableCell>
                     <TableCell>{comp.currentMultiple}</TableCell>
                     <TableCell>{comp.industryMultiple}</TableCell>
-                    <TableCell>฿{comp.impliedValue}</TableCell>
+                    <TableCell>{formatCurrency(safeNumber(comp.impliedValue), stockData?.currency)}</TableCell>
                   </TableRow>
                 ))}
                 <TableRow className="font-bold bg-gray-100">
                   <TableCell colSpan={3}>Average Implied Value</TableCell>
-                  <TableCell>฿{safeToFixed(averageComparableValue, 2)}</TableCell>
+                  <TableCell>{formatCurrency(averageComparableValue, stockData?.currency)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

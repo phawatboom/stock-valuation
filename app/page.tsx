@@ -14,13 +14,12 @@ import PrecedentTransactions from "@/features/models/precedent-transactions"
 import InvestmentRecommendation from "@/components/investment-recommendation"
 import DataTemplateManager from "@/components/data-template-manager"
 import APIDataFetcher from "@/components/api-data-fetcher"
+import Watchlist from "@/components/watchlist"
 import ScenarioAnalysis from "@/features/models/scenario"
 import EnhancedValuationSummary from "@/components/enhanced-valuation-summary"
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
-  Download,
-  Settings,
   Calculator,
   Brain,
   TrendingUp,
@@ -75,8 +74,8 @@ function Dashboard() {
   }, [])
 
   useEffect(() => {
-    // Fetch initial data for a default stock, e.g., "PTT"
-    fetchStockData("PTT")
+    // Fetch initial data for a default stock
+    fetchStockData("AAPL")
   }, [fetchStockData])
 
   const handleWACCCalculated = useCallback(
@@ -149,6 +148,7 @@ function Dashboard() {
           <div className="space-y-6">
             <StockSearch onSearch={fetchStockData} isLoading={isLoading} />
             <APIDataFetcher onDataFetched={handleAPIDataFetched} isLoading={isLoading} />
+            <Watchlist currentStock={stockData} onSelect={fetchStockData} />
           </div>
           <div className="lg:col-span-2">
             <DataTemplateManager
@@ -211,7 +211,7 @@ function Dashboard() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="dcf">
+              <TabsContent value="dcf" forceMount>
                 <DCFAnalysis 
                   stockData={stockData} 
                   wacc={valuationResult.wacc} 
@@ -219,7 +219,7 @@ function Dashboard() {
                   onDCFCalculated={handleDCFCalculated} 
                 />
               </TabsContent>
-              <TabsContent value="residual-income">
+              <TabsContent value="residual-income" forceMount>
                 <ResidualIncomeAnalysis
                   stockData={stockData}
                   wacc={valuationResult.wacc}
@@ -227,13 +227,13 @@ function Dashboard() {
                   onResidualIncomeCalculated={handleResidualIncomeCalculated}
                 />
               </TabsContent>
-              <TabsContent value="comparables">
+              <TabsContent value="comparables" forceMount>
                 <ComparablesAnalysis 
                   stockData={stockData} 
                   onComparablesCalculated={handleComparablesCalculated} 
                 />
               </TabsContent>
-              <TabsContent value="dividend-discount">
+              <TabsContent value="dividend-discount" forceMount>
                 <DividendDiscountAnalysis
                   stockData={stockData}
                   wacc={valuationResult.wacc}
@@ -241,7 +241,7 @@ function Dashboard() {
                   onDividendDiscountCalculated={handleDividendDiscountCalculated}
                 />
               </TabsContent>
-              <TabsContent value="precedent-transactions">
+              <TabsContent value="precedent-transactions" forceMount>
                 <PrecedentTransactions
                   stockData={stockData}
                   onPrecedentTransactionsCalculated={handlePrecedentTransactionsCalculated}
@@ -256,6 +256,7 @@ function Dashboard() {
               <TabsContent value="scenario-analysis">
                 <ScenarioAnalysis
                   baseValuation={valuationResult.average || 0}
+                  stockData={stockData}
                   onScenarioCalculated={setScenarioResults}
                 />
               </TabsContent>

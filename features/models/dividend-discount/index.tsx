@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { safeNumber, safeToFixed } from "@/lib/utils"
+import { safeNumber, safeToFixed, formatCurrency } from "@/lib/utils"
 import type { StockData, Assumptions } from "@/types"
 
 interface DividendDiscountAnalysisProps {
@@ -92,11 +92,11 @@ export default function DividendDiscountAnalysis({
           <CardContent className="space-y-2">
             <div className="flex justify-between">
               <span>Dividend Per Share (Current):</span>
-              <span className="font-bold">฿{safeToFixed(initialDividendPerShare, 2)}</span>
+              <span className="font-bold">{formatCurrency(initialDividendPerShare, stockData?.currency)}</span>
             </div>
             <div className="flex justify-between">
               <span>DDM Value Per Share:</span>
-              <span className="font-bold text-xl">฿{safeToFixed(ddaPerShare, 2)}</span>
+              <span className="font-bold text-xl">{formatCurrency(ddaPerShare, stockData?.currency)}</span>
             </div>
             {safeNumber(costOfEquity) / 100 <= safeNumber(dividendGrowthRate) / 100 && (
               <div className="text-red-500 text-sm">
