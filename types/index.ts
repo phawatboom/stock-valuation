@@ -88,6 +88,8 @@ export interface StockData {
   lastUpdated: string
   technicalIndicators?: TechnicalIndicators
   priceData?: PriceDataPoint[]
+  isMock?: boolean
+  currency?: string
 }
 
 export interface ValuationResult {
