@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { StockData } from "@/types"
 import { normalizeStockData } from "@/services/marketData/adapter"
+import { formatCurrency } from "@/lib/utils"
 
 interface FileUploadProps {
   onFileUpload: (data: StockData) => void
@@ -171,11 +172,10 @@ export default function FileUpload({ onFileUpload }: FileUploadProps) {
                 <p className="font-medium">Latest Metrics:</p>
                 <ul className="text-gray-600 mt-1">
                   <li>
-                    • Revenue: ฿{(parsedData.financials?.revenue / 1000000000).toFixed(0)}B
+                    • Revenue: {formatCurrency(parsedData.financials?.revenue / 1000000000, parsedData.currency, 0)}B
                   </li>
                   <li>
-                    • Net Income: ฿
-                    {(parsedData.financials?.netIncome / 1000000000).toFixed(0)}B
+                    • Net Income: {formatCurrency(parsedData.financials?.netIncome / 1000000000, parsedData.currency, 0)}B
                   </li>
                   <li>• ROE: {(parsedData.financials?.returnOnEquity).toFixed(1)}%</li>
                   <li>• P/E: {parsedData.metrics?.priceToEarnings.toFixed(1)}x</li>

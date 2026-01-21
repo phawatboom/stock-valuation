@@ -193,7 +193,6 @@ export default function DataTemplateManager({
         // Parse CSV/Excel content here - assuming JSON for now
         const rawData = JSON.parse(content)
         const parsedData = normalizeStockData(rawData)
-        console.log("File uploaded:", file.name)
         onDataUpdate({ source: "file", data: parsedData })
       } catch (error) {
         console.error("Error parsing file:", error)
@@ -206,7 +205,6 @@ export default function DataTemplateManager({
     setActiveConnection(sourceId)
     // Simulate connection process
     setTimeout(() => {
-      console.log(`Connected to ${sourceId}`)
       setActiveConnection(null)
     }, 2000)
   }
@@ -260,7 +258,6 @@ export default function DataTemplateManager({
       if (loadedData) {
         // In a real app, you'd apply loadedData to your app's state
         setMessage(`Template "${selectedTemplate}" loaded successfully!`)
-        console.log("Loaded template data:", loadedData)
       } else {
         setMessage(`Template "${selectedTemplate}" not found.`)
       }
