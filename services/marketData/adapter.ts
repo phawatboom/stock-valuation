@@ -3,12 +3,14 @@ import { mockStockData } from "./mock"
 
 export function normalizeStockData(data: any): StockData {
   // Helper to ensure number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const num = (val: any, defaultVal = 0) => {
     const n = parseFloat(val)
     return isNaN(n) ? defaultVal : n
   }
 
   // Helper to ensure string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const str = (val: any, defaultVal = "") => (val ? String(val) : defaultVal)
 
   const financials: FinancialData = {
@@ -97,11 +99,30 @@ export function normalizeStockData(data: any): StockData {
 }
 
 export async function fetchStockData(symbol: string): Promise<StockData> {
-  console.log(`Fetching data for ${symbol}`)
-  // Simulate API call
-  await new Promise((resolve) => setTimeout(resolve, 1500))
+  try {
+    const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}`);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    return data as StockData;
+    } catch (error) {
+      console.warn(`Failed to fetch live data for ${symbol}, falling back to mock data.`, error);
+      // Fallback to mock data if API fails
+              return {
+                ...mockStockData,
+                symbol: symbol.toUpperCase(),
+                companyName: `${symbol.toUpperCase()} (Mock Data - API Failed)`,
+                isMock: true,
+                currency: "USD",
+              };
+              }
+  }
   
-  // In a real app, we would fetch from an API here
-  // For now, we return the mock data, but normalized
-  return normalizeStockData(mockStockData)
-}
